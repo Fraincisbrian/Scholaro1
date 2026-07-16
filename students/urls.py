@@ -1,0 +1,12 @@
+from django.urls import path
+
+from . import views
+
+app_name = "students"
+
+urlpatterns = [
+    path("", views.student_list, name="list"),
+    path("enroll/", views.student_enroll, name="enroll"),
+    path("<int:pk>/", views.student_detail, name="detail"),
+    path("<int:pk>/delete/", views.student_delete, name="delete"),
+]
