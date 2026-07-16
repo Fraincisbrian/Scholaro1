@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Announcements - Scholaro{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-1">
+    <h2 class="fw-bold mb-0">Upcoming Events</h2>
+    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createEventModal">
+        <i class="bi bi-plus-lg"></i> New Event
+    </button>
+</div>
+<p class="text-muted mb-3">Shown on the dashboard's "Upcoming Events" card.</p>
+
+<div class="panel mb-4">
+    <table class="table align-middle mb-0">
+        <thead>
+            <tr class="text-muted small text-uppercase">
+                <th>Title</th><th>Date</th><th>Time / Venue</th><th>Audience</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for e in events %}
+            <tr>
+                <td class="fw-semibold">{{ e.title }}</td>
+                <td>{{ e.date|date:"Y-m-d" }}</td>
+                <td>{{ e.time_label|default:"—" }}</td>
+                <td><span class="badge badge-audience">{{ e.audience }}</span></td>
+                <td>
+                    <a href="#" class="text-primary me-2" data-bs-toggle="modal" data-bs-target="#editEventModal{{ e.id }}"><i class="bi bi-pencil-square"></i></a>
+                    <form method="post" action="{% url 'event_delete' e.id %}" class="d-inline" onsubmit="return confirm('Remove this event?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No events yet — add one above.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% for e in events %}
+    <div class="modal fade" id="editEventModal{{ e.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Edit Event</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'event_edit' e.id %}">
+                    {% csrf_token %}
+                    {% with form=event_edit_forms|get_item:e.id %}
+                    <div class="modal-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">Title</label>{{ form.title }}</div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Date</label>{{ form.date }}</div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Time / Venue</label>{{ form.time_label }}</div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Audience</label>{{ form.audience }}</div>
+                    </div>
+                    {% endwith %}
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+<div class="modal fade" id="createEventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">New Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'event_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label fw-semibold">Title</label>{{ event_create_form.title }}</div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Date</label>{{ event_create_form.date }}</div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Time / Venue</label>{{ event_create_form.time_label }}</div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Audience</label>{{ event_create_form.audience }}</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<div class="d-flex justify-content-between align-items-center mb-1">
+    <h2 class="fw-bold mb-0">Announcements</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+        <i class="bi bi-plus-lg"></i> New Announcement
+    </button>
+</div>
+<p class="text-muted mb-4">Stay updated with the latest news and notices.</p>
+
+{% for a in announcements %}
+    <div class="panel mb-3 {% if a.is_important %}border border-danger{% endif %}">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex align-items-start gap-2">
+                {% if a.is_important %}<i class="bi bi-star-fill text-warning mt-1"></i>{% endif %}
+                <div>
+                    <span class="fw-bold fs-5">{{ a.title }}</span>
+                    {% for label in a.audience_labels %}
+                        <span class="badge badge-audience ms-1"><i class="bi bi-people-fill"></i> {{ label }}</span>
+                    {% endfor %}
+                    <div class="text-muted mt-2">{{ a.message }}</div>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="text-muted small mb-2"><i class="bi bi-calendar3"></i> {{ a.date|date:"Y-m-d" }}</div>
+                <a href="#" class="text-primary me-2" data-bs-toggle="modal" data-bs-target="#editModal{{ a.id }}"><i class="bi bi-pencil-square"></i></a>
+                <form method="post" action="{% url 'announcement_delete' a.id %}" class="d-inline" onsubmit="return confirm('Delete this announcement?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit modal for this announcement -->
+    <div class="modal fade {% if open_edit_id == a.id %}show{% endif %}" id="editModal{{ a.id }}" tabindex="-1" {% if open_edit_id == a.id %}style="display:block;background:rgba(0,0,0,.5)"{% endif %}>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Edit Announcement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'announcement_edit' a.id %}">
+                    {% csrf_token %}
+                    {% include "core/_announcement_form_fields.html" with form=edit_forms|get_item:a.id %}
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Announcement</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% empty %}
+    <div class="panel text-center text-muted py-4">No announcements yet.</div>
+{% endfor %}
+
+<!-- Create modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Create Announcement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'announcement_create' %}">
+                {% csrf_token %}
+                {% include "core/_announcement_form_fields.html" with form=create_form %}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Post Announcement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if request.GET.open == 'create' %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    new bootstrap.Modal(document.getElementById('createModal')).show();
+});
+</script>
+{% endif %}
+{% endblock %}

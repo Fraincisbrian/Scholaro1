@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Enter Marks - Scholaro{% endblock %}
+{% block content %}
+<a href="{% url 'exams:list' %}" class="text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Exams</a>
+<h2 class="fw-bold mb-1 mt-2">{{ exam.name }}</h2>
+<p class="text-muted mb-4">{{ exam.get_term_display }} &middot; {{ exam.academic_year }}</p>
+
+<div class="panel mb-4">
+    <h5 class="fw-bold mb-3">Enter Marks</h5>
+    <form method="get" class="row g-3 align-items-end" id="pickerForm">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Class</label>
+            <select name="school_class" id="school_class_select" class="form-select" onchange="document.getElementById('subject_select').value=''; this.form.submit();">
+                <option value="">Select Class</option>
+                {% for stream_label, stream_classes in classes_by_stream %}
+                    <optgroup label="{{ stream_label }}">
+                        {% for c in stream_classes %}
+                            <option value="{{ c.id }}" {% if class_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+        </div>
+        {% if class_id %}
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Subject</label>
+            <select name="subject" id="subject_select" class="form-select" onchange="this.form.submit();">
+                <option value="">Select Subject</option>
+                {% for s in subjects %}
+                    <option value="{{ s.id }}" {% if subject_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Load</button>
+        </div>
+    </form>
+    {% if class_id and subjects|length == 0 %}
+        <div class="alert alert-warning small mt-3 mb-0">This class has no subjects assigned yet. Add some from Class Setup first.</div>
+    {% endif %}
+</div>
+
+{% if class_id and subject_id and students %}
+<div class="panel">
+    <h4 class="fw-bold mb-3">Student Marks</h4>
+    <form method="post" action="{% url 'exams:save_marks' exam.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="school_class" value="{{ class_id }}">
+        <input type="hidden" name="subject" value="{{ subject_id }}">
+        <div class="mb-3 col-md-3">
+            <label class="form-label fw-semibold small">Max Score</label>
+            <input type="number" name="max_score" class="form-control" value="100" min="1" step="0.5">
+        </div>
+        <table class="table align-middle">
+            <thead>
+                <tr class="text-muted small text-uppercase">
+                    <th>Roll No</th>
+                    <th>Name</th>
+                    <th style="width: 140px;">Score</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for student in students %}
+                {% with mark=existing|get_item:student.id %}
+                <tr>
+                    <td>{{ student.roll_number|default:"—" }}</td>
+                    <td>{{ student.full_name }}</td>
+                    <td><input type="number" step="0.5" min="0" class="form-control" name="score_{{ student.id }}" value="{{ mark.score|default:'' }}"></td>
+                    <td><input type="text" class="form-control" name="remarks_{{ student.id }}" value="{{ mark.remarks|default:'' }}"></td>
+                </tr>
+                {% endwith %}
+            {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Save Marks</button>
+    </form>
+</div>
+{% elif class_id and subject_id %}
+<div class="panel text-center text-muted py-4">No students found in this class.</div>
+{% endif %}
+{% endblock %}

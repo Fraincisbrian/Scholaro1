@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load attendance_extras %}
+{% block title %}Attendance - Scholaro{% endblock %}
+{% block content %}
+<div class="panel mb-4">
+    <h2 class="fw-bold mb-4">Mark Attendance</h2>
+    <form method="get" class="row g-3 align-items-end" id="pickerForm">
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Date</label>
+            <input type="date" name="date" value="{{ selected_date }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Section</label>
+            <select name="stream" class="form-select" onchange="document.getElementById('school_class_select').value=''; this.form.submit();">
+                <option value="">Select Section</option>
+                {% for value, label in streams %}
+                    <option value="{{ value }}" {% if stream == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if stream %}
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Class</label>
+            <select name="school_class" id="school_class_select" class="form-select" onchange="this.form.submit();">
+                <option value="">Select Class</option>
+                {% for c in classes %}
+                    <option value="{{ c.id }}" {% if class_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Load</button>
+        </div>
+    </form>
+</div>
+
+{% if class_id and students %}
+<div class="panel">
+    <h4 class="fw-bold mb-3">Student List</h4>
+    <form method="post" action="{% url 'attendance:save' %}">
+        {% csrf_token %}
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        <input type="hidden" name="stream" value="{{ stream }}">
+        <input type="hidden" name="school_class" value="{{ class_id }}">
+        <table class="table align-middle">
+            <thead>
+                <tr class="text-muted small text-uppercase">
+                    <th>Roll No</th>
+                    <th>Name</th>
+                    <th>Status (Present / Absent / Late)</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for student in students %}
+                <tr>
+                    <td>{{ student.roll_number|default:"—" }}</td>
+                    <td>{{ student.full_name }}</td>
+                    <td>
+                        <div class="d-flex gap-4">
+                        {% for value, label in statuses %}
+                            {% with current=existing|get_item:student.id %}
+                            <div class="form-check">
+                                <input type="radio" class="form-check-input" name="status_{{ student.id }}" id="status_{{ student.id }}_{{ value }}" value="{{ value }}"
+                                    {% if current == value or not current and value == "present" %}checked{% endif %}>
+                                <label class="form-check-label" for="status_{{ student.id }}_{{ value }}">{{ label }}</label>
+                            </div>
+                            {% endwith %}
+                        {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% elif class_id %}
+<div class="panel text-center text-muted py-4">No students found in this class.</div>
+{% endif %}
+{% endblock %}

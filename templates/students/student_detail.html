@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} - Scholaro{% endblock %}
+{% block content %}
+<a href="{% url 'students:list' %}" class="text-decoration-none mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to Student Directory</a>
+
+<div class="panel">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">{{ student.full_name }}</h2>
+            <span class="badge badge-audience">{{ student.school_class|default:"Unassigned" }}</span>
+        </div>
+        {% if student.profile_photo %}
+            <img src="{{ student.profile_photo.url }}" alt="" class="rounded-circle" width="72" height="72" style="object-fit:cover;">
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <h6 class="fw-bold text-muted">Student Details</h6>
+            <table class="table table-sm">
+                <tr><td class="text-muted">Roll Number</td><td>{{ student.roll_number|default:"—" }}</td></tr>
+                <tr><td class="text-muted">Date of Birth</td><td>{{ student.date_of_birth|default:"—" }}</td></tr>
+                <tr><td class="text-muted">Gender</td><td>{{ student.get_gender_display }}</td></tr>
+                <tr><td class="text-muted">Address</td><td>{{ student.address|default:"—" }}</td></tr>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h6 class="fw-bold text-muted">Parent Details</h6>
+            <table class="table table-sm">
+                <tr><td class="text-muted">Father's Name</td><td>{{ student.father_name|default:"—" }}</td></tr>
+                <tr><td class="text-muted">Mother's Name</td><td>{{ student.mother_name|default:"—" }}</td></tr>
+                <tr><td class="text-muted">Primary Phone</td><td>{{ student.primary_phone }}</td></tr>
+                <tr><td class="text-muted">Secondary Phone</td><td>{{ student.secondary_phone|default:"—" }}</td></tr>
+                <tr><td class="text-muted">Email</td><td>{{ student.parent_email|default:"—" }}</td></tr>
+            </table>
+        </div>
+    </div>
+
+    {% if student.school_class %}
+    <div class="mt-4">
+        <h6 class="fw-bold text-muted">Subjects ({{ student.school_class }})</h6>
+        {% with subjects=student.school_class.subjects.all %}
+        {% if subjects %}
+            <div class="d-flex flex-wrap gap-2">
+                {% for subject in subjects %}
+                    <span class="badge badge-audience">{{ subject.name }}{% if subject.teacher %} &middot; {{ subject.teacher.get_full_name|default:subject.teacher.username }}{% endif %}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted small mb-0">No subjects assigned to this class yet — add some from Class Setup.</p>
+        {% endif %}
+        {% endwith %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

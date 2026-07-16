@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Staff - Scholaro{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-1">
+    <div>
+        <h2 class="fw-bold mb-1">Staff Directory</h2>
+        <p class="text-muted mb-4">Manage teachers and staff, and invite new members to Scholaro.</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal"><i class="bi bi-plus-lg"></i> Add Staff</button>
+</div>
+
+<div class="panel mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <input type="text" name="q" class="form-control" placeholder="Search by name or email" value="{{ query }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-secondary w-100">Search</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <table class="table align-middle">
+        <thead>
+            <tr class="text-muted small text-uppercase">
+                <th>Name</th><th>Email</th><th>Role</th><th>Designation</th><th>Status</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in staff_users %}
+            <tr>
+                <td>{{ u.get_full_name|default:u.username }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.get_role_display }}</td>
+                <td>{{ u.staff_profile.designation|default:"—" }}</td>
+                <td>
+                    {% if u.is_active %}
+                        <span class="badge bg-success-subtle text-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-warning-subtle text-warning">Invite Pending</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if not u.is_active %}
+                    <form method="post" action="{% url 'staff:resend' u.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link p-0 me-2" title="Resend invite"><i class="bi bi-envelope-arrow-up"></i></button>
+                    </form>
+                    {% endif %}
+                    <a href="#" class="text-primary me-2" data-bs-toggle="modal" data-bs-target="#editStaffModal{{ u.id }}"><i class="bi bi-pencil-square"></i></a>
+                    <form method="post" action="{% url 'staff:delete' u.id %}" class="d-inline" onsubmit="return confirm('Remove this staff member? This cannot be undone.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No staff members yet — invite one above.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Staff modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Add Staff</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'staff:invite' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">First Name</label>
+                            {{ invite_form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Last Name</label>
+                            {{ invite_form.last_name }}
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Email</label>
+                            {{ invite_form.email }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            {{ invite_form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Role</label>
+                            {{ invite_form.role }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Designation</label>
+                            {{ invite_form.designation }}
+                        </div>
+                    </div>
+                    <div class="alert alert-info small mt-3 mb-0">
+                        <i class="bi bi-envelope"></i> An invite email with a link to set their password will be sent to this address.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Invite</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit modals -->
+{% for u in staff_users %}
+<div class="modal fade" id="editStaffModal{{ u.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Staff Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'staff:edit' u.id %}">
+                {% csrf_token %}
+                {% with form=edit_forms|get_item:u.id %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">First Name</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Last Name</label>
+                            {{ form.last_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Role</label>
+                            {{ form.role }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Designation</label>
+                            {{ form.designation }}
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

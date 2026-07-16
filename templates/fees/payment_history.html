@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Payment History - Scholaro{% endblock %}
+{% block content %}
+<a href="{% url 'fees:management' %}" class="text-decoration-none mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Back to Fees</a>
+
+<div class="panel">
+    <h5 class="fw-bold mb-3">Payment History <span class="text-muted fw-normal">— {{ student.full_name }}</span></h5>
+    <table class="table align-middle">
+        <thead>
+            <tr class="text-muted small text-uppercase">
+                <th>Date</th><th>Amount</th><th>Mode</th><th>Receipt</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in payments %}
+            <tr>
+                <td>{{ p.date|date:"Y-m-d" }}</td>
+                <td>₹{{ p.amount }}</td>
+                <td>{{ p.get_mode_display }}</td>
+                <td><a href="{% url 'fees:receipt' p.id %}" class="text-success text-decoration-none"><i class="bi bi-file-earmark-pdf-fill"></i> Receipt</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-4">No payments recorded yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

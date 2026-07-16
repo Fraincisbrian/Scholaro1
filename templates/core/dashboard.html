@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Scholaro{% endblock %}
+
+{% block content %}
+<h2 class="fw-bold mb-1">Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h2>
+<p class="text-muted mb-4">Here is what's happening at your school today.</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2-4">
+        <div class="stat-card">
+            <div class="stat-label">Total Students</div>
+            <div class="stat-value text-dark">{{ total_students }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+        <div class="stat-card">
+            <div class="stat-label">Total Staff</div>
+            <div class="stat-value text-dark">{{ total_staff }} <small class="stat-sub">/ {{ staff_accepted }} Accepted</small></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+        <div class="stat-card">
+            <div class="stat-label">Today's Attendance</div>
+            <div class="stat-value text-success">{{ attendance_percent }}%</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+        <div class="stat-card">
+            <div class="stat-label">Fees Collected</div>
+            <div class="stat-value text-primary-brand">₦{{ fees_collected }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+        <div class="stat-card">
+            <div class="stat-label">Fees Pending</div>
+            <div class="stat-value text-danger">₦{{ fees_pending }}</div>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3">Quick Actions</h5>
+<div class="d-flex flex-wrap gap-3 mb-4">
+    <a href="{% url 'attendance:mark' %}" class="btn btn-primary quick-action-btn"><i class="bi bi-calendar-check"></i> Mark Attendance</a>
+    <a href="{% url 'students:list' %}?open=enroll" class="btn btn-success quick-action-btn"><i class="bi bi-person-plus"></i> Add Student</a>
+    <a href="{% url 'announcement_list' %}?open=create" class="btn btn-primary quick-action-btn"><i class="bi bi-megaphone"></i> Create Announcement</a>
+    <a href="{% url 'fees:defaulters' %}" class="btn btn-outline-primary quick-action-btn"><i class="bi bi-receipt"></i> Fee Defaulters</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="panel">
+            <h5 class="fw-bold mb-3">Recent Announcements</h5>
+            {% for a in announcements %}
+                <div class="announcement-item {% if a.is_important %}important{% endif %}">
+                    <div class="d-flex align-items-start gap-2">
+                        {% if a.is_important %}<i class="bi bi-star-fill text-warning mt-1"></i>{% endif %}
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <div class="fw-semibold">{{ a.title }}
+                                    <span class="badge badge-audience ms-1">{{ a.get_audience_display }}</span>
+                                    {% if a.custom_audience %}<span class="badge badge-audience ms-1">{{ a.custom_audience }}</span>{% endif %}
+                                </div>
+                                <div class="text-muted small"><i class="bi bi-calendar3"></i> {{ a.date|date:"Y-m-d" }}</div>
+                            </div>
+                            <div class="text-muted small mt-1">{{ a.message }}</div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No announcements yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="panel mb-4">
+            <h5 class="fw-bold mb-3">Upcoming Events</h5>
+            {% for e in events %}
+                <div class="event-item">
+                    <div class="event-date">
+                        <div class="event-month">{{ e.date|date:"M"|upper }}</div>
+                        <div class="event-day">{{ e.date|date:"d" }}</div>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">{{ e.title }}</div>
+                        <div class="text-muted small">{{ e.time_label }}</div>
+                        <div class="text-muted small">{{ e.audience }}</div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No upcoming events.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

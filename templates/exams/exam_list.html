@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Exams - Scholaro{% endblock %}
+{% block content %}
+<h2 class="fw-bold mb-1">Exams</h2>
+<p class="text-muted mb-4">Create exams and enter marks per subject for each class.</p>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="panel">
+            <h5 class="fw-bold mb-3">Create Exam</h5>
+            <form method="post" action="{% url 'exams:create' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Exam Name</label>
+                    {{ create_form.name }}
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Term</label>
+                        {{ create_form.term }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Academic Year</label>
+                        {{ create_form.academic_year }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Date</label>
+                    {{ create_form.date }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Classes</label>
+                    <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                        {% for stream_label, stream_classes in classes_by_stream %}
+                            <div class="small text-muted fw-semibold mt-1">{{ stream_label }}</div>
+                            {% for c in stream_classes %}
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="classes" value="{{ c.id }}" id="create_class_{{ c.id }}">
+                                    <label class="form-check-label" for="create_class_{{ c.id }}">{{ c }}</label>
+                                </div>
+                            {% endfor %}
+                        {% empty %}
+                            <p class="text-muted small mb-0">No classes yet — add some from Class Setup first.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Create Exam</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="panel">
+            <h5 class="fw-bold mb-3">All Exams</h5>
+            <table class="table align-middle">
+                <thead>
+                    <tr class="text-muted small text-uppercase">
+                        <th>Exam</th><th>Term</th><th>Year</th><th>Classes</th><th>Marks Entered</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for exam in exams %}
+                    <tr>
+                        <td>{{ exam.name }}{% if exam.date %}<div class="small text-muted">{{ exam.date }}</div>{% endif %}</td>
+                        <td>{{ exam.get_term_display }}</td>
+                        <td>{{ exam.academic_year }}</td>
+                        <td>{{ exam.class_count }}</td>
+                        <td>{{ exam.marks_entered_count }}</td>
+                        <td>
+                            <a href="{% url 'exams:enter_marks' exam.id %}" class="btn btn-sm btn-primary me-1">Enter Marks</a>
+                            <a href="#" class="text-primary me-2" data-bs-toggle="modal" data-bs-target="#editExamModal{{ exam.id }}"><i class="bi bi-pencil-square"></i></a>
+                            <form method="post" action="{% url 'exams:delete' exam.id %}" class="d-inline" onsubmit="return confirm('Delete this exam and all its marks?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No exams yet — create one to get started.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% for exam in exams %}
+<div class="modal fade" id="editExamModal{{ exam.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Edit Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'exams:edit' exam.id %}">
+                {% csrf_token %}
+                {% with form=edit_forms|get_item:exam.id selected=selected_classes_by_exam|get_item:exam.id %}
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label fw-semibold">Exam Name</label>{{ form.name }}</div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Term</label>{{ form.term }}</div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Academic Year</label>{{ form.academic_year }}</div>
+                    <div class="mb-3"><label class="form-label fw-semibold">Date</label>{{ form.date }}</div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Classes</label>
+                        <div class="border rounded p-2" style="max-height: 180px; overflow-y: auto;">
+                            {% for stream_label, stream_classes in classes_by_stream %}
+                                <div class="small text-muted fw-semibold mt-1">{{ stream_label }}</div>
+                                {% for c in stream_classes %}
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="classes" value="{{ c.id }}" id="edit_class_{{ exam.id }}_{{ c.id }}" {% if c.id in selected %}checked{% endif %}>
+                                        <label class="form-check-label" for="edit_class_{{ exam.id }}_{{ c.id }}">{{ c }}</label>
+                                    </div>
+                                {% endfor %}
+                            {% empty %}
+                                <p class="text-muted small mb-0">No classes yet — add some from Class Setup first.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

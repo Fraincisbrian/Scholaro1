@@ -1,0 +1,29 @@
+<div class="modal-body">
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Title *</label>
+        {{ form.title }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Message *</label>
+        {{ form.message }}
+    </div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Date *</label>
+            {{ form.date }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Target Classes</label>
+            {{ form.classes }}
+            <div class="form-text">Ctrl/Cmd+click to select multiple.</div>
+        </div>
+    </div>
+    <div class="form-check mt-3">
+        {{ form.all_school }}
+        <label class="form-check-label" for="{{ form.all_school.id_for_label }}">All School</label>
+    </div>
+    <div class="form-check">
+        {{ form.is_important }}
+        <label class="form-check-label" for="{{ form.is_important.id_for_label }}">Mark as Important</label>
+    </div>
+</div>
